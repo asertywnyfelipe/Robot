@@ -65,6 +65,11 @@ typedef struct {
     bool dir;           // Motor direction (1: forward, 0: reverse)
 } Motor;
 
+typedef struct {
+    Motor MotorLeft;
+    Motor MotorRight;
+} Robot;
+
 void init_motor(Motor *motor,TIM_HandleTypeDef *htim, uint32_t channel, int speed, bool direction)
 {
 	 HAL_TIM_PWM_Start(motor->htim, motor->channel);
@@ -89,7 +94,7 @@ void motor_set_speed(Motor *motor, int speed)
 }
 
 
-void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port, uint16_t gpio_pin, bool direction)
+void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port, uint16_t gpio_pinFW, uint16_t gpio_pinBW, bool direction)
 {
 	if (direction!=0 && direction !=1)
 	{
@@ -100,8 +105,8 @@ void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port, uint16_t gpio_pi
 		motor->dir=direction;
 	}
 
-	            HAL_GPIO_WritePin(gpio_port, gpio_pin,  direction ? GPIO_PIN_SET : GPIO_PIN_RESET); // Example: Set direction pin high
-	 //           HAL_GPIO_WritePin(gpio_port, gpio_pin, direction); //test if this is working as well
+	            HAL_GPIO_WritePin(gpio_port, gpio_pinFW,  direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	            HAL_GPIO_WritePin(gpio_port, gpio_pinBW,  !direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
 
@@ -146,11 +151,16 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  Motor MotorLeft;
-  Motor MotorRight;
+  Robot *andrzej;
 
- init_motor(&MotorLeft, &htim3, TIM_CHANNEL_3, 0, 1);
- init_motor(&MotorLeft, &htim3, TIM_CHANNEL_4, 0, 1);
+ init_motor(&andrzej->MotorLeft, &htim3, TIM_CHANNEL_3, 0, 1);
+ init_motor(&andrzej->MotorRight, &htim3, TIM_CHANNEL_4, 0, 1);
+
+
+ int current_mode=0;
+
+
+
 
   /* USER CODE END 2 */
 
@@ -159,6 +169,26 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+
+	    switch (current_mode) {
+	        case 0: //mode 0, print menu options;
+	            printf("Hello, my name is Andrzej\n What do you want me to do?\n");
+	            break;
+	        case 1://mode 1, autonomous driving
+
+	            break;
+	        case 2://mode 2, driving from controller
+	            printf("You selected Option 2.\n");
+	            break;
+	        case 3://mode 3 fight mode
+	            printf("You selected Option 3.\n");
+	            break;
+	        default:
+	            printf("Invalid choice.\n");
+	            break;
+	    }
+
+
 
     /* USER CODE BEGIN 3 */
   }
