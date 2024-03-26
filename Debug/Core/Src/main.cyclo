@@ -1,7 +1,9 @@
-../Core/Src/main.c:73:6:init_motor	1
-../Core/Src/main.c:83:6:motor_set_speed	3
-../Core/Src/main.c:97:6:motor_set_direction	3
-../Core/Src/main.c:113:6:motor_info	1
-../Core/Src/main.c:126:5:main	5
-../Core/Src/main.c:202:6:SystemClock_Config	3
-../Core/Src/main.c:247:6:Error_Handler	1
+../Core/Src/main.c:89:6:init_motor	1
+../Core/Src/main.c:99:6:motor_set_speed	3
+../Core/Src/main.c:113:6:motor_set_direction	3
+../Core/Src/main.c:128:6:button_up_callback	3
+../Core/Src/main.c:138:6:handle_button_press	1
+../Core/Src/main.c:149:6:motor_info	1
+../Core/Src/main.c:162:5:main	5
+../Core/Src/main.c:248:6:SystemClock_Config	3
+../Core/Src/main.c:293:6:Error_Handler	1

@@ -65,6 +65,12 @@ void Error_Handler(void);
 #define MOT2_Forward_GPIO_Port GPIOA
 #define MOT2_Backward_Pin GPIO_PIN_13
 #define MOT2_Backward_GPIO_Port GPIOA
+#define BUTTON_Confirm_Pin GPIO_PIN_0
+#define BUTTON_Confirm_GPIO_Port GPIOD
+#define BUTTON_Up_Pin GPIO_PIN_1
+#define BUTTON_Up_GPIO_Port GPIOD
+#define BUTTON_Down_Pin GPIO_PIN_2
+#define BUTTON_Down_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

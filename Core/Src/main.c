@@ -56,6 +56,22 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+typedef void (*ButtonCallback)(uint8_t);
+
+typedef struct {
+    GPIO_TypeDef *gpio_port;
+    uint16_t gpio_pin;
+    ButtonCallback callback;
+} Button;
+
+Button buttons[] = {
+    {GPIOD, BUTTON_Confirm_Pin, NULL},
+    {GPIOD, BUTTON_Up_Pin, NULL},
+    {GPIOD, BUTTON_Down_Pin, NULL}
+};
+
+
+
 // Define a struct representing a motor
 typedef struct {
     TIM_HandleTypeDef *htim; // Pointer to TIM_HandleTypeDef for the motor PWM
@@ -109,6 +125,26 @@ void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port, uint16_t gpio_pi
 	            HAL_GPIO_WritePin(gpio_port, gpio_pinBW,  !direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
+void button_up_callback(int current_mode, int current_selection)
+{
+    if (mode == 0)
+    {
+        if (current_selection > 0)
+            current_selection++;
+    }
+}
+
+
+
+void button_down_callback(int current_mode, int current_selection)
+{
+    if (mode == 0)
+    {
+        if (current_selection > 0)
+            current_selection--;
+    }
+}
+
 
 void motor_info(Motor *motor)
 {
@@ -158,8 +194,7 @@ int main(void)
 
 
  int current_mode=0;
-
-
+int mode_change =0;
 
 
   /* USER CODE END 2 */
@@ -168,11 +203,22 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+
 
 	    switch (current_mode) {
 	        case 0: //mode 0, print menu options;
-	            printf("Hello, my name is Andrzej\n What do you want me to do?\n");
+
+
+	            printf("Hello, choose mode you wanna operate?\n");
+
+
+
+	            printf("current mode to choose is %d\n", mode_change);//print on the screen
+
+
+
+
+				;
 	            break;
 	        case 1://mode 1, autonomous driving
 
@@ -189,7 +235,7 @@ int main(void)
 	    }
 
 
-
+	    /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
