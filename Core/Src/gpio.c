@@ -43,6 +43,7 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, MOT1_Forward_Pin|MOT1_Backward_Pin|MOT2_Forward_Pin|MOT2_Backward_Pin, GPIO_PIN_RESET);

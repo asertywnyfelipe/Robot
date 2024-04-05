@@ -18,12 +18,27 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "tim.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
+#include "lcd_i2c.h"
 #include <stdbool.h>
+#define lcd_Columns 20
+#define lcd_Rows 3
+#define menuStep 10
+
+
+bool isMenuLock = false;
+int menuSelected = -1;
+bool isLcdRefresh = false;
+int demoSpeed = 0;
+
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +71,50 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+typedef struct {
+    const char *name;
+    int subMenu;
+} MenuItem;
+
+
+
+
+typedef struct {
+    int index; //obecny index
+    int indexResult; //index do wchodzenia do odpowiednich menu bez submenu
+    int lcdDisplayStart; //liczba od ktorej mamu wyswietlac
+    int lcdIndexStart; //maksymalna liczba menu albo submenu
+    char lcdValue[lcd_Rows][lcd_Columns + 1];
+} Menu;
+
+
+
+
+ const MenuItem menuItem[] = {
+    {"Main menu", -1},     			 // 0
+    {"Autonomous Driving", -1},         // 1
+    {"User Control", -1},         // 2
+    {"Speed Settings", -1},         // 3
+    {"menu D", -1},       		  // 4
+    {"Menu E", -1},        		 // 5
+    {"S", -1},     			 // 6
+    {"", -2},               // 7
+    {"", -2},               // 8
+    {"", -2},               // 9
+	 {"", -2},               // 10
+
+
+	 {"", -2},               // 11
+	 {"", -2},               // 12
+	 {"", -2},               // 9
+
+
+};
+
+
+
+
+
 typedef void (*ButtonCallback)(uint8_t);
 
 typedef struct {
@@ -69,6 +128,18 @@ Button buttons[] = {
     {GPIOD, BUTTON_Up_Pin, NULL},
     {GPIOD, BUTTON_Down_Pin, NULL}
 };
+
+
+Menu menu = {
+    .index = 1,
+    .indexResult = -1,
+    .lcdDisplayStart = 0,
+    .lcdIndexStart = 0
+};
+
+
+
+
 
 
 
@@ -125,9 +196,158 @@ void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port, uint16_t gpio_pi
 	            HAL_GPIO_WritePin(gpio_port, gpio_pinBW,  !direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
+
+
+void Display()
+   {
+		char _dataStr[20];
+
+
+       if (menu.lcdDisplayStart % menuStep == 0) //beginning of menu
+       {
+           menu.lcdDisplayStart = menu.index;
+       }
+       else if(menuItem[(menu.index)+1].subMenu==-2) //end of menu
+       {
+    	   menu.lcdDisplayStart = menu.index-2;
+       }
+       else //middle of menu
+       {
+           menu.lcdDisplayStart = menu.index-1;
+       }
+
+//       if (index == 0)
+//           index = 1;
+
+
+       /* Generowanie lini */
+
+       for (int x = 0; x < lcd_Rows; x++)
+       {
+           strcpy(_dataStr, " "); // Clearing the string
+
+
+           if (menu.index == menu.lcdDisplayStart+x)
+                       strcat(_dataStr, ">"); // Adding ">" if the index matches
+           if (menuItem[menu.lcdDisplayStart + x].subMenu >= 0 && menu.lcdIndexStart != menu.lcdDisplayStart + x)
+                   {
+                       strcat(_dataStr, "+"); // Adding "+" if condition met
+                   }
+            else
+                   {
+                       strcat(_dataStr, " "); // Adding space otherwise
+                   }
+
+           strcat(_dataStr, menuItem[menu.lcdDisplayStart + x].name); // Adding the menu item name
+                //   strcpy(menu.lcdValue[x], FillSpace(_dataStr)); // Filling space and copying to lcdValue array
+       }
+   }
+
+
+void GetButtonInput()
+{
+    if (HAL_GPIO_ReadPin(GPIOD, BUTTON_Up_Pin) == 1)
+    {
+        menu.index++;
+        if (menu.index > menu.lcdIndexStart + menuStep)
+        {
+        	menu.index = menu.lcdIndexStart + menuStep;
+        }
+        Display();
+        HAL_Delay(200); // Adjust delay as needed
+    }
+    else if (HAL_GPIO_ReadPin(GPIOD, BUTTON_Down_Pin) == 1)
+    {
+    	menu.index--;
+        if (menu.index < menu.lcdIndexStart)
+        {
+        	menu.index = menu.lcdIndexStart;
+        }
+        Display();
+        HAL_Delay(200); // Adjust delay as needed
+    }
+    else if (HAL_GPIO_ReadPin(GPIOD, BUTTON_Confirm_Pin) == 1)
+    {
+        MenuOk();
+        HAL_Delay(200); // Adjust delay as needed
+    }
+}
+
+
+int Tick()
+   {
+	   GetButtonInput();
+       int _indexResult = menu.indexResult;
+       menu.indexResult = -1;
+       return _indexResult;
+   }
+
+
+void MenuOk()
+{
+    if (menuItem[menu.index].subMenu > 0)//jezeli istnieje submenu
+    {
+        if (menuItem[menu.index].subMenu > menu.index)//jezeli submenu jest wieksze niz obecne menu (idziemy w gore)
+        {
+        	menu.lcdIndexStart = menuItem[menu.index].subMenu;
+            menu.index = menu.lcdIndexStart + 1;   //jestesmy na 1 nizej niz menu
+            menu.lcdDisplayStart = menu.lcdIndexStart;
+        }
+        else //jezeli submenu jest mniejsze
+        {
+
+        	menu.lcdIndexStart = menuItem[menu.index].subMenu / menuStep;
+        	menu.lcdIndexStart *= menuStep;
+            menu.index = menuItem[menu.index].subMenu;
+            menu.lcdDisplayStart = menu.index - 1;
+            if (menu.lcdDisplayStart < 0)
+            	menu.lcdDisplayStart = 0;
+        }
+        Display();
+    }
+    else //nie ma submenu
+    {
+    	menu.indexResult = menu.index;
+    }
+}
+
+
+
+//void PrintOnLCD()
+//{
+//
+//	 if (isMenuLock == true)
+//	  {
+//	    isLcdRefresh = true;
+//	    return;
+//	  }
+//	  for (int x = 0; x < lcd_Rows; x++)
+//	  {
+//
+//	    if (mainLcdValue[x] != menu.lcdValue[x] || isLcdRefresh == true)
+//	    {
+//	      mainLcdValue[x] = menu.lcdValue[x];
+//	     // lcd.setCursor(0, x);
+//	     // lcd.print(mainLcdValue[x]);
+//	    }
+//	  }
+//	  isLcdRefresh = false;
+//}
+
+
+
+//void Menu()//TO FINISH
+//{
+//
+//
+//
+//
+//
+//}
+
 void button_up_callback(int current_mode, int current_selection)
 {
-    if (mode == 0)
+    if (current_mode == 0)
     {
         if (current_selection > 0)
             current_selection++;
@@ -138,7 +358,7 @@ void button_up_callback(int current_mode, int current_selection)
 
 void button_down_callback(int current_mode, int current_selection)
 {
-    if (mode == 0)
+    if (current_mode == 0)
     {
         if (current_selection > 0)
             current_selection--;
@@ -185,6 +405,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM3_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
   Robot *andrzej;
@@ -197,6 +418,15 @@ int main(void)
 int mode_change =0;
 
 
+
+Menu menu;
+
+menu.index = 1;
+menu.indexResult = -1;
+menu.lcdDisplayStart = 0;
+menu.lcdIndexStart = 0;
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -205,37 +435,56 @@ int mode_change =0;
   {
 
 
-	    switch (current_mode) {
-	        case 0: //mode 0, print menu options;
-
-
-	            printf("Hello, choose mode you wanna operate?\n");
-
-
-
-	            printf("current mode to choose is %d\n", mode_change);//print on the screen
 
 
 
 
-				;
-	            break;
-	        case 1://mode 1, autonomous driving
-
-	            break;
-	        case 2://mode 2, driving from controller
-	            printf("You selected Option 2.\n");
-	            break;
-	        case 3://mode 3 fight mode
-	            printf("You selected Option 3.\n");
-	            break;
-	        default:
-	            printf("Invalid choice.\n");
-	            break;
-	    }
 
 
-	    /* USER CODE END WHILE */
+
+
+GetButtonInput();
+
+
+
+
+
+
+//
+//
+//	  switch (current_mode) {
+//	        case 0: //mode 0, print menu options;
+//
+//
+//	            printf("Hello, choose mode you wanna operate?\n");
+//
+//
+//
+//	            printf("current mode to choose is %d\n", mode_change);//print on the screen
+//
+//
+//
+//
+//				;
+//	            break;
+//	        case 1://mode 1, autonomous driving
+//
+//	            break;
+//	        case 2://mode 2, driving from controller
+//	            printf("You selected Option 2.\n");
+//	            break;
+//	        case 3://mode 3 fight mode
+//	            printf("You selected Option 3.\n");
+//	            break;
+//	        default:
+//	            printf("Invalid choice.\n");
+//	            break;
+//}
+
+
+
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
