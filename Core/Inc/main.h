@@ -57,6 +57,20 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define C3_Keyboard_Pin GPIO_PIN_10
+#define C3_Keyboard_GPIO_Port GPIOB
+#define C2_Keyboard_Pin GPIO_PIN_12
+#define C2_Keyboard_GPIO_Port GPIOB
+#define C1_Keyboard_Pin GPIO_PIN_14
+#define C1_Keyboard_GPIO_Port GPIOB
+#define R4_Keyboard_Pin GPIO_PIN_8
+#define R4_Keyboard_GPIO_Port GPIOD
+#define R3_Keyboard_Pin GPIO_PIN_10
+#define R3_Keyboard_GPIO_Port GPIOD
+#define R2_Keyboard_Pin GPIO_PIN_12
+#define R2_Keyboard_GPIO_Port GPIOD
+#define R1_Keyboard_Pin GPIO_PIN_14
+#define R1_Keyboard_GPIO_Port GPIOD
 #define MOT1_Forward_Pin GPIO_PIN_8
 #define MOT1_Forward_GPIO_Port GPIOA
 #define MOT1_Backward_Pin GPIO_PIN_9
