@@ -86,6 +86,21 @@ typedef struct {
 	char lcdValue[lcd_Rows][lcd_Columns + 1];
 } Menu;
 
+// Define a struct representing a motor
+typedef struct {
+	TIM_HandleTypeDef *htim; // Pointer to TIM_HandleTypeDef for the motor PWM
+	uint32_t channel;        // TIM channel number for the motor PWM
+	int speed;               // Motor speed (0-100)
+	bool dir;           // Motor direction (1: forward, 0: reverse)
+} Motor;
+
+typedef struct {
+	Motor MotorLeft;
+	Motor MotorRight;
+} RobotComponents;
+
+
+
 const MenuItem menuItem[] = { { "Main menu", -1 },     			 // 0
 		{ "Autonomous Mode", -1 },         // 1
 		{ "User Control", -1 },         // 2
@@ -104,33 +119,11 @@ const MenuItem menuItem[] = { { "Main menu", -1 },     			 // 0
 
 		};
 
-typedef void (*ButtonCallback)(uint8_t);
-
-typedef struct {
-	GPIO_TypeDef *gpio_port;
-	uint16_t gpio_pin;
-	ButtonCallback callback;
-} Button;
-
-Button buttons[] = { { GPIOD, BUTTON_Confirm_Pin, NULL }, { GPIOD,
-		BUTTON_Up_Pin, NULL }, { GPIOD, BUTTON_Down_Pin, NULL } };
 
 Menu menu = { .index = 1, .indexResult = -1, .lcdDisplayStart = 0,
 		.lcdIndexStart = 0 };
 
-// Define a struct representing a motor
-typedef struct {
-	TIM_HandleTypeDef *htim; // Pointer to TIM_HandleTypeDef for the motor PWM
-
-	uint32_t channel;        // TIM channel number for the motor PWM
-	int speed;               // Motor speed (0-100)
-	bool dir;           // Motor direction (1: forward, 0: reverse)
-} Motor;
-
-typedef struct {
-	Motor MotorLeft;
-	Motor MotorRight;
-} Robot;
+RobotComponents robot;
 
 void init_motor(Motor *motor, TIM_HandleTypeDef *htim, uint32_t channel,
 		int speed, bool direction) {
@@ -158,10 +151,8 @@ void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port,
 		motor->dir = direction;
 	}
 
-	HAL_GPIO_WritePin(gpio_port, gpio_pinFW,
-			direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(gpio_port, gpio_pinBW,
-			!direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(gpio_port, gpio_pinFW, direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(gpio_port, gpio_pinBW, !direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 char read_keyboard() {
 
@@ -281,30 +272,12 @@ void Display() {
 		menu.lcdDisplayStart = menu.index - 1;
 	}
 	menu.lcdDisplayStart = menu.index;
-//       if (index == 0)
-//           index = 1;
-
-	/* Generowanie lini */
-
-
-
-//		if (menu.index == menu.lcdDisplayStart)
-//			strcat(_dataStr, ">"); // Adding ">" if the index matches
-//		if (menuItem[menu.lcdDisplayStart + x].subMenu >= 0
-//				&& menu.lcdIndexStart != menu.lcdDisplayStart + x) {
-//			strcat(_dataStr, "+"); // Adding "+" if condition met
-//		} else {
-//			strcat(_dataStr, " "); // Adding space otherwise
-//		}
-
 
 
 		sprintf((char *)disp.f_line, ">%s", menuItem[menu.lcdDisplayStart].name);
 		sprintf((char *)disp.s_line, menuItem[menu.lcdDisplayStart+1].name);
 		lcd_display(&disp);
 		HAL_Delay(500);
-
-
 
 	}
 
@@ -336,10 +309,9 @@ void GetButtonInput() {
 		//Display();
 
 	}
-
-
-
 }
+
+
 
 int Tick() {
 	GetButtonInput();
@@ -373,28 +345,21 @@ void MenuOk() {
 	}
 }
 
+void DisplayParameters()
+{
+	while(read_keyboard() != '#')
+	{
+	sprintf((char *)disp.f_line, "SPEED LEFT:%d", robot.MotorLeft.speed);
+	sprintf((char *)disp.s_line, "SPEED RIGHT:%d", robot.MotorRight.speed);
+	lcd_display(&disp);
+	HAL_Delay(1000);
 
-
-//void PrintOnLCD()
-//{
-//
-//	 if (isMenuLock == true)
-//	  {
-//	    isLcdRefresh = true;
-//	    return;
-//	  }
-//	  for (int x = 0; x < lcd_Rows; x++)
-//	  {
-//
-//	    if (mainLcdValue[x] != menu.lcdValue[x] || isLcdRefresh == true)
-//	    {
-//	      mainLcdValue[x] = menu.lcdValue[x];
-//	     // lcd.setCursor(0, x);
-//	     // lcd.print(mainLcdValue[x]);
-//	    }
-//	  }
-//	  isLcdRefresh = false;
-//}
+	sprintf((char *)disp.f_line, "SPEED DIR:%d", robot.MotorLeft.dir);
+	sprintf((char *)disp.s_line, "SPEED DIR:%d", robot.MotorRight.dir);
+	lcd_display(&disp);
+	HAL_Delay(1000);
+	}
+}
 
 void MenuDecode()
 {
@@ -409,7 +374,9 @@ void MenuDecode()
     if (!isMenuLock)
     {
       isMenuLock = true;
+      break;
     }
+
     else
     {
     	int temp_speed=0;
@@ -425,17 +392,38 @@ void MenuDecode()
     		lcd_display(&disp);
     		}
 
-
-
-
-
+    		if (read_keyboard() == '8' && temp_speed>=0)
+    		{
+    		temp_speed--;
+    		sprintf((char *)disp.f_line, "SPEED:%d", temp_speed);
+    		lcd_display(&disp);
+    		}
     	}
     	isMenuLock = false;
     	menuSelected = -1;
-    	       // motor_set_speed();
+    	motor_set_speed(&(robot.MotorLeft), temp_speed);
+    	motor_set_speed(&(robot.MotorRight), temp_speed);
     	Display();
     	break;
     }
+  }
+  case 4:
+  {
+	  if (!isMenuLock)
+	  {
+	  isMenuLock = true;
+	  }
+	  else
+	  {
+	  DisplayParameters();
+	  isMenuLock = false;
+	  menuSelected = -1;
+	  Display();
+	  break;
+	  }
+
+
+
   }
   default:
   {
@@ -445,19 +433,6 @@ void MenuDecode()
   }
 }
 
-void button_up_callback(int current_mode, int current_selection) {
-	if (current_mode == 0) {
-		if (current_selection > 0)
-			current_selection++;
-	}
-}
-
-void button_down_callback(int current_mode, int current_selection) {
-	if (current_mode == 0) {
-		if (current_selection > 0)
-			current_selection--;
-	}
-}
 
 void motor_info(Motor *motor) {
 	printf("Motor Speed: %d\n", motor->speed);
@@ -498,10 +473,8 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
-	Robot *andrzej;
-
-// init_motor(&andrzej->MotorLeft, &htim3, TIM_CHANNEL_3, 0, 1);
-// init_motor(&andrzej->MotorRight, &htim3, TIM_CHANNEL_4, 0, 1);
+ init_motor(&(robot.MotorLeft), &htim3, TIM_CHANNEL_3, 0, 1);
+ init_motor(&(robot.MotorRight), &htim3, TIM_CHANNEL_4, 0, 1);
 
 	int current_mode = 0;
 	int mode_change = 0;
@@ -536,7 +509,9 @@ int main(void) {
 
 		  if (isMenuLock == false)
 		  {
+
 		    menuSelected = Tick();
+
 		  }
 		  MenuDecode();
 
