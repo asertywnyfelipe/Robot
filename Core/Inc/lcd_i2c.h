@@ -56,8 +56,8 @@
 
 struct lcd_disp {
 	uint8_t addr;
-	char f_line[17];
-	char s_line[17];
+	char f_line[19];
+	char s_line[19];
 	bool bl;
 };
 

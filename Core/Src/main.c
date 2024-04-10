@@ -26,14 +26,13 @@
 /* USER CODE BEGIN Includes */
 
 #include "lcd_i2c.h"
+#include "motor.h"
+#include "menu.h"
 #include <stdbool.h>
+#include <stdio.h>
 #define lcd_Columns 20
 #define lcd_Rows 2
 #define menuStep 10
-
-/* BUTTONS 4x3
- *
- */
 
 bool isMenuLock = false;
 int menuSelected = -1;
@@ -74,32 +73,9 @@ void SystemClock_Config(void);
 /* USER CODE BEGIN 0 */
 
 typedef struct {
-	const char *name;
-	int subMenu;
-} MenuItem;
-
-typedef struct {
-	int index; //obecny index
-	int indexResult; //index do wchodzenia do odpowiednich menu bez submenu
-	int lcdDisplayStart; //liczba od ktorej mamu wyswietlac
-	int lcdIndexStart; //maksymalna liczba menu albo submenu
-	char lcdValue[lcd_Rows][lcd_Columns + 1];
-} Menu;
-
-// Define a struct representing a motor
-typedef struct {
-	TIM_HandleTypeDef *htim; // Pointer to TIM_HandleTypeDef for the motor PWM
-	uint32_t channel;        // TIM channel number for the motor PWM
-	int speed;               // Motor speed (0-100)
-	bool dir;           // Motor direction (1: forward, 0: reverse)
-} Motor;
-
-typedef struct {
 	Motor MotorLeft;
 	Motor MotorRight;
 } RobotComponents;
-
-
 
 const MenuItem menuItem[] = { { "Main menu", -1 },     			 // 0
 		{ "Autonomous Mode", -1 },         // 1
@@ -119,146 +95,11 @@ const MenuItem menuItem[] = { { "Main menu", -1 },     			 // 0
 
 		};
 
-
 Menu menu = { .index = 1, .indexResult = -1, .lcdDisplayStart = 0,
 		.lcdIndexStart = 0 };
 
 RobotComponents robot;
 
-void init_motor(Motor *motor, TIM_HandleTypeDef *htim, uint32_t channel,
-		int speed, bool direction) {
-	HAL_TIM_PWM_Start(motor->htim, motor->channel);
-	motor->htim = htim;
-	motor->channel = channel;
-	motor->speed = 0;
-	motor->dir = 1;
-}
-
-void motor_set_speed(Motor *motor, int speed) {
-	if (speed > 100) {
-		speed = 100;
-	} else if (speed < 0) {
-		speed = 0;
-	}
-	motor->speed = speed;
-}
-
-void motor_set_direction(Motor *motor, GPIO_TypeDef *gpio_port,
-		uint16_t gpio_pinFW, uint16_t gpio_pinBW, bool direction) {
-	if (direction != 0 && direction != 1) {
-		printf("direction not correct\n");
-	} else {
-		motor->dir = direction;
-	}
-
-	HAL_GPIO_WritePin(gpio_port, gpio_pinFW, direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(gpio_port, gpio_pinBW, !direction ? GPIO_PIN_SET : GPIO_PIN_RESET);
-}
-char read_keyboard() {
-
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_RESET); //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET); // Pull the R4 High
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin))); // wait till the button is pressed
-		return '1';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)));
-			   // wait till the button is pressed
-		return '2';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)));
-			   // wait till the button is pressed
-		return '3';
-	}
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_RESET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET); // Pull the R4 High
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '4';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '5';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '6';
-	}
-
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_RESET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET); // Pull the R4 High
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '7';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '8';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '9';
-	}
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_RESET); // Pull the R4 High
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '*';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '0';
-	}
-
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '#';
-	}
-
-	return 'X';
-}
 void Display() {
 	if (menu.lcdDisplayStart % menuStep == 0) //beginning of menu
 			{
@@ -273,51 +114,10 @@ void Display() {
 	}
 	menu.lcdDisplayStart = menu.index;
 
-
-		sprintf((char *)disp.f_line, ">%s", menuItem[menu.lcdDisplayStart].name);
-		sprintf((char *)disp.s_line, menuItem[menu.lcdDisplayStart+1].name);
-		lcd_display(&disp);
-		HAL_Delay(500);
-
-	}
-
-
-void GetButtonInput() {
-
-	char temp =read_keyboard();
-	if (temp == '8' && menuItem[(menu.index) + 1].subMenu > -2) {
-		menu.index++;
-		if (menu.index > menu.lcdIndexStart + menuStep) {
-			menu.index = menu.lcdIndexStart + menuStep;
-		}
-		Display();
-	}
-	if (temp == '2') {
-		menu.index--;
-		if (menu.index < menu.lcdIndexStart) {
-			menu.index = menu.lcdIndexStart;
-		}
-		Display();
-	}
-	if (temp == '#') {
-		MenuOk();
-
-	}
-
-	if (temp=='X')
-	{
-		//Display();
-
-	}
-}
-
-
-
-int Tick() {
-	GetButtonInput();
-	int _indexResult = menu.indexResult;
-	menu.indexResult = -1;
-	return _indexResult;
+	sprintf((char*) disp.f_line, ">%s", menuItem[menu.lcdDisplayStart].name);
+	sprintf((char*) disp.s_line, menuItem[menu.lcdDisplayStart + 1].name);
+	lcd_display(&disp);
+	HAL_Delay(500);
 }
 
 void MenuOk() {
@@ -339,104 +139,110 @@ void MenuOk() {
 				menu.lcdDisplayStart = 0;
 		}
 		Display();
+
 	} else //nie ma submenu
 	{
 		menu.indexResult = menu.index;
 	}
 }
 
-void DisplayParameters()
-{
-	while(read_keyboard() != '#')
-	{
-	sprintf((char *)disp.f_line, "SPEED LEFT:%d", robot.MotorLeft.speed);
-	sprintf((char *)disp.s_line, "SPEED RIGHT:%d", robot.MotorRight.speed);
-	lcd_display(&disp);
-	HAL_Delay(1000);
+void GetButtonInput() {
+	char temp = read_keyboard();
+	if (temp == '8' && menuItem[(menu.index) + 1].subMenu > -2) {
+		menu.index++;
+		if (menu.index > menu.lcdIndexStart + menuStep) {
+			menu.index = menu.lcdIndexStart + menuStep;
+		}
+		Display();
+	}
+	if (temp == '2') {
+		menu.index--;
+		if (menu.index < menu.lcdIndexStart) {
+			menu.index = menu.lcdIndexStart;
+		}
+		Display();
+	}
+	if (temp == '#') {
+		MenuOk();
 
-	sprintf((char *)disp.f_line, "SPEED DIR:%d", robot.MotorLeft.dir);
-	sprintf((char *)disp.s_line, "SPEED DIR:%d", robot.MotorRight.dir);
-	lcd_display(&disp);
-	HAL_Delay(1000);
 	}
 }
 
-void MenuDecode()
-{
-  switch (menuSelected)
-  {
-  case 0:
-  {
-    break;
-  }
-  case 3:
-  {
-    if (!isMenuLock)
-    {
-      isMenuLock = true;
-      break;
-    }
-
-    else
-    {
-    	int temp_speed=0;
-    	sprintf((char *)disp.f_line, "SPEED:%d", temp_speed);
-    	sprintf((char *)disp.s_line, "");
-    	lcd_display(&disp);
-    	while(read_keyboard() != '#')
-    	{
-    		if (read_keyboard() == '2')
-    		{
-    		temp_speed++;
-    		sprintf((char *)disp.f_line, "SPEED:%d", temp_speed);
-    		lcd_display(&disp);
-    		}
-
-    		if (read_keyboard() == '8' && temp_speed>=0)
-    		{
-    		temp_speed--;
-    		sprintf((char *)disp.f_line, "SPEED:%d", temp_speed);
-    		lcd_display(&disp);
-    		}
-    	}
-    	isMenuLock = false;
-    	menuSelected = -1;
-    	motor_set_speed(&(robot.MotorLeft), temp_speed);
-    	motor_set_speed(&(robot.MotorRight), temp_speed);
-    	Display();
-    	break;
-    }
-  }
-  case 4:
-  {
-	  if (!isMenuLock)
-	  {
-	  isMenuLock = true;
-	  }
-	  else
-	  {
-	  DisplayParameters();
-	  isMenuLock = false;
-	  menuSelected = -1;
-	  Display();
-	  break;
-	  }
-
-
-
-  }
-  default:
-  {
-
-    break;
-  }
-  }
+int Tick() {
+	GetButtonInput();
+	int _indexResult = menu.indexResult;
+	menu.indexResult = -1;
+	return _indexResult;
 }
 
+void DisplayParameters() {
+	while (read_keyboard() != '#') {
+		sprintf((char*) disp.f_line, "SPEED LEFT:%d", robot.MotorLeft.speed);
+		sprintf((char*) disp.s_line, "SPEED RIGHT:%d", robot.MotorRight.speed);
+		lcd_display(&disp);
+		HAL_Delay(1000);
 
-void motor_info(Motor *motor) {
-	printf("Motor Speed: %d\n", motor->speed);
-	printf("Motor Direction %d\n", motor->dir);
+		sprintf((char*) disp.f_line, "SPEED DIR:%d", robot.MotorLeft.dir);
+		sprintf((char*) disp.s_line, "SPEED DIR:%d", robot.MotorRight.dir);
+		lcd_display(&disp);
+		HAL_Delay(1000);
+	}
+}
+
+void MenuDecode() {
+	switch (menuSelected) {
+	case 0: {
+		break;
+	}
+	case 3: {
+		if (!isMenuLock) {
+			isMenuLock = true;
+			break;
+		}
+
+		else {
+			int temp_speed = 0;
+			sprintf((char*) disp.f_line, "SPEED:%d", temp_speed);
+			sprintf((char*) disp.s_line, "  ");
+			lcd_display(&disp);
+			while (read_keyboard() != '#') {
+				if (read_keyboard() == '2') {
+					temp_speed++;
+					sprintf((char*) disp.f_line, "SPEED:%d", temp_speed);
+					lcd_display(&disp);
+				}
+
+				if (read_keyboard() == '8' && temp_speed >= 0) {
+					temp_speed--;
+					sprintf((char*) disp.f_line, "SPEED:%d", temp_speed);
+					lcd_display(&disp);
+				}
+			}
+			isMenuLock = false;
+			menuSelected = -1;
+			motor_set_speed(&(robot.MotorLeft), temp_speed);
+			motor_set_speed(&(robot.MotorRight), temp_speed);
+			Display();
+			break;
+		}
+	}
+	case 4: {
+		if (!isMenuLock) {
+			isMenuLock = true;
+		} else {
+			DisplayParameters();
+			isMenuLock = false;
+			menuSelected = -1;
+			Display();
+			break;
+		}
+
+	}
+	default: {
+
+		break;
+	}
+	}
 }
 
 /* USER CODE END 0 */
@@ -473,26 +279,19 @@ int main(void) {
 	MX_I2C1_Init();
 	/* USER CODE BEGIN 2 */
 
- init_motor(&(robot.MotorLeft), &htim3, TIM_CHANNEL_3, 0, 1);
- init_motor(&(robot.MotorRight), &htim3, TIM_CHANNEL_4, 0, 1);
-
-	int current_mode = 0;
-	int mode_change = 0;
-
-
+	init_motor(&(robot.MotorLeft), &htim3, TIM_CHANNEL_3, 0, 1);
+	init_motor(&(robot.MotorRight), &htim3, TIM_CHANNEL_4, 0, 1);
 
 	disp.addr = (0x27 << 1);
 	disp.bl = true;
 	lcd_init(&disp);
 
-	Menu menu;
-
 	menu.index = 0;
 	menu.indexResult = -1;
 	menu.lcdDisplayStart = 0;
 	menu.lcdIndexStart = 0;
-	char temp = 0;
-	Display();
+
+
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -500,54 +299,12 @@ int main(void) {
 	while (1) {
 //
 
+		if (isMenuLock == false) {
 
+			menuSelected = Tick();
 
-
-
-
-
-
-		  if (isMenuLock == false)
-		  {
-
-		    menuSelected = Tick();
-
-		  }
-		  MenuDecode();
-
-
-
-
-
-//
-//	  switch (current_mode) {
-//	        case 0: //mode 0, print menu options;
-//
-//
-//	            printf("Hello, choose mode you wanna operate?\n");
-//
-//
-//
-//	            printf("current mode to choose is %d\n", mode_change);//print on the screen
-//
-//
-//
-//
-//				;
-//	            break;
-//	        case 1://mode 1, autonomous driving
-//
-//	            break;
-//	        case 2://mode 2, driving from controller
-//	            printf("You selected Option 2.\n");
-//	            break;
-//	        case 3://mode 3 fight mode
-//	            printf("You selected Option 3.\n");
-//	            break;
-//	        default:
-//	            printf("Invalid choice.\n");
-//	            break;
-//}
+		}
+		MenuDecode();
 
 		/* USER CODE END WHILE */
 
