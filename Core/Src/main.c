@@ -20,6 +20,7 @@
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -72,6 +73,8 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+uint8_t txBuffer[20] = "TEST 1\r\n";
+
 typedef struct {
 	Motor MotorLeft;
 	Motor MotorRight;
@@ -83,7 +86,7 @@ const MenuItem menuItem[] = { { "Main menu", -1 },     			 // 0
 		{ "Speed Settings", -1 },         // 3
 		{ "View Parameters", -1 },       		  // 4
 		{ "Menu E", -1 },        		 // 5
-		{ "S", -1 },     			 // 6
+		{ "Bluetooth Test", -1 },     			 // 6
 		{ "", -2 },               // 7
 		{ "", -2 },               // 8
 		{ "", -2 },               // 9
@@ -212,7 +215,7 @@ void MenuDecode() {
 					lcd_display(&disp);
 				}
 
-				if (read_keyboard() == '8' && temp_speed >= 0) {
+				if (read_keyboard() == '8' && temp_speed > 0) {
 					temp_speed--;
 					sprintf((char*) disp.f_line, "SPEED:%d", temp_speed);
 					lcd_display(&disp);
@@ -229,6 +232,7 @@ void MenuDecode() {
 	case 4: {
 		if (!isMenuLock) {
 			isMenuLock = true;
+			break;
 		} else {
 			DisplayParameters();
 			isMenuLock = false;
@@ -236,119 +240,155 @@ void MenuDecode() {
 			Display();
 			break;
 		}
+		}
+		case 6:
+		{
+			if (!isMenuLock) {
+				isMenuLock = true;
+				break;
+			} else {
+				while (read_keyboard() != '#') {
 
-	}
-	default: {
 
-		break;
+
+					HAL_UART_Transmit(&huart1, txBuffer, sizeof(txBuffer),
+							HAL_MAX_DELAY);
+
+
+
+					HAL_Delay(100);
+				}
+				isMenuLock = false;
+				menuSelected = -1;
+				break;
+			}
+		}
+		default:
+		{
+
+			break;
+		}
 	}
 	}
-}
 
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
-int main(void) {
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
 
-	/* USER CODE BEGIN 1 */
+  /* USER CODE BEGIN 1 */
 
-	/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
-	/* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
-	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-	HAL_Init();
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
 
-	/* USER CODE BEGIN Init */
+  /* USER CODE BEGIN Init */
 
-	/* USER CODE END Init */
+  /* USER CODE END Init */
 
-	/* Configure the system clock */
-	SystemClock_Config();
+  /* Configure the system clock */
+  SystemClock_Config();
 
-	/* USER CODE BEGIN SysInit */
+  /* USER CODE BEGIN SysInit */
 
-	/* USER CODE END SysInit */
+  /* USER CODE END SysInit */
 
-	/* Initialize all configured peripherals */
-	MX_GPIO_Init();
-	MX_TIM3_Init();
-	MX_I2C1_Init();
-	/* USER CODE BEGIN 2 */
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_I2C1_Init();
+  MX_USART2_UART_Init();
+  MX_TIM3_Init();
+  MX_USART1_UART_Init();
+  MX_USART6_UART_Init();
+  /* USER CODE BEGIN 2 */
 
-	init_motor(&(robot.MotorLeft), &htim3, TIM_CHANNEL_3, 0, 1);
-	init_motor(&(robot.MotorRight), &htim3, TIM_CHANNEL_4, 0, 1);
+		init_motor(&(robot.MotorLeft), &htim3, TIM_CHANNEL_3, 0, 1);
+		init_motor(&(robot.MotorRight), &htim3, TIM_CHANNEL_4, 0, 1);
 
-	disp.addr = (0x27 << 1);
-	disp.bl = true;
-	lcd_init(&disp);
+		disp.addr = (0x27 << 1);
+		disp.bl = true;
+		lcd_init(&disp);
 
-	menu.index = 0;
-	menu.indexResult = -1;
-	menu.lcdDisplayStart = 0;
-	menu.lcdIndexStart = 0;
+		menu.index = 0;
+		menu.indexResult = -1;
+		menu.lcdDisplayStart = 0;
+		menu.lcdIndexStart = 0;
 
+  /* USER CODE END 2 */
 
-	/* USER CODE END 2 */
-
-	/* Infinite loop */
-	/* USER CODE BEGIN WHILE */
-	while (1) {
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+		while (1) {
 //
 
-		if (isMenuLock == false) {
 
-			menuSelected = Tick();
 
+//			HAL_UART_Transmit(&huart2, txBuffer, sizeof(txBuffer), HAL_MAX_DELAY);
+//								HAL_Delay(1000);
+
+
+
+
+			if (isMenuLock == false) {
+
+				menuSelected = Tick();
+
+			}
+			MenuDecode();
+
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
 		}
-		MenuDecode();
-
-		/* USER CODE END WHILE */
-
-		/* USER CODE BEGIN 3 */
-	}
-	/* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
-void SystemClock_Config(void) {
-	RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-	RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
+{
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-	/** Configure the main internal regulator output voltage
-	 */
-	__HAL_RCC_PWR_CLK_ENABLE();
-	__HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+  /** Configure the main internal regulator output voltage
+  */
+  __HAL_RCC_PWR_CLK_ENABLE();
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
-	/** Initializes the RCC Oscillators according to the specified parameters
-	 * in the RCC_OscInitTypeDef structure.
-	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
-		Error_Handler();
-	}
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
-	/** Initializes the CPU, AHB and APB buses clocks
-	 */
-	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
-			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK) {
-		Error_Handler();
-	}
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
 }
 
 /* USER CODE BEGIN 4 */
@@ -356,16 +396,21 @@ void SystemClock_Config(void) {
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
-void Error_Handler(void) {
-	/* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
-	__disable_irq();
-	while (1) {
-	}
-	/* USER CODE END Error_Handler_Debug */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+		/* User can add his own implementation to report the HAL error return state */
+		__disable_irq();
+		while (1)
+			;
+		{
+
+		}
+
+  /* USER CODE END Error_Handler_Debug */
 }
 
 #ifdef  USE_FULL_ASSERT
