@@ -1,9 +1,6 @@
-../Core/Src/main.c:106:6:Display	3
-../Core/Src/main.c:126:6:MenuOk	4
-../Core/Src/main.c:152:6:GetButtonInput	7
-../Core/Src/main.c:174:5:Tick	1
-../Core/Src/main.c:181:6:DisplayParameters	2
-../Core/Src/main.c:195:6:MenuDecode	12
-../Core/Src/main.c:280:5:main	2
-../Core/Src/main.c:357:6:SystemClock_Config	3
-../Core/Src/main.c:402:6:Error_Handler	1
+../Core/Src/main.c:43:6:DisplayMenu	4
+../Core/Src/main.c:59:6:HandleMenuInput	10
+../Core/Src/main.c:94:6:actionSpeedSettings	6
+../Core/Src/main.c:122:6:actionViewParameters	2
+../Core/Src/main.c:148:6:send_via_bluetooth	1
+../Core/Src/main.c:153:5:main	2

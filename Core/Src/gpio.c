@@ -40,10 +40,10 @@ void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin|R3_Keyboard_Pin|R2_Keyboard_Pin|R1_Keyboard_Pin, GPIO_PIN_RESET);
@@ -75,111 +75,98 @@ void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 2 */
 char read_keyboard() {
+    HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_RESET);  // Pull R1 low
+    HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET);    // Pull R2 high
+    HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET);    // Pull R3 high
+    HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET);    // Pull R4 high
 
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_RESET); //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET); // Pull the R4 High
+    if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)));  // Wait till the button is pressed
+        UART_SendChar('1');  // Send the key through UART
+        return '1';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			; // wait till the button is pressed
-		return '1';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)));
+        UART_SendChar('2');
+        return '2';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;
-		// wait till the button is pressed
-		return '2';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)));
+        UART_SendChar('3');
+        return '3';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;
-		// wait till the button is pressed
-		return '3';
-	}
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_RESET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET); // Pull the R4 High
+    HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  // Pull R1 low
+    HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_RESET); // Pull R2 high
+    HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET);   // Pull R3 high
+    HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET);   // Pull R4 high
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '4';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)));
+        UART_SendChar('4');
+        return '4';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '5';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)));
+        UART_SendChar('5');
+        return '5';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '6';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)));
+        UART_SendChar('6');
+        return '6';
+    }
 
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_RESET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET); // Pull the R4 High
+    HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  // Pull R1 low
+    HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET);  // Pull R2 high
+    HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_RESET); // Pull R3 high
+    HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_SET);  // Pull R4 high
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '7';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)));
+        UART_SendChar('7');
+        return '7';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '8';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)));
+        UART_SendChar('8');
+        return '8';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '9';
-	}
-	HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  //Pull the R1 low
-	HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET); // Pull the R2 High
-	HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET); // Pull the R3 High
-	HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_RESET); // Pull the R4 High
+    if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)));
+        UART_SendChar('9');
+        return '9';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))   // if the Col 1 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '*';
-	}
+    HAL_GPIO_WritePin(GPIOD, R1_Keyboard_Pin, GPIO_PIN_SET);  // Pull R1 low
+    HAL_GPIO_WritePin(GPIOD, R2_Keyboard_Pin, GPIO_PIN_SET);  // Pull R2 high
+    HAL_GPIO_WritePin(GPIOD, R3_Keyboard_Pin, GPIO_PIN_SET);  // Pull R3 high
+    HAL_GPIO_WritePin(GPIOD, R4_Keyboard_Pin, GPIO_PIN_RESET); // Pull R4 high
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))   // if the Col 2 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '0';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C1_Keyboard_Pin)));
+        UART_SendChar('*');
+        return '*';
+    }
 
-	if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))   // if the Col 3 is low
-	{
-		while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)))
-			;   // wait till the button is pressed
-		return '#';
-	}
+    if (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C2_Keyboard_Pin)));
+        UART_SendChar('0');
+        return '0';
+    }
 
-	return 'X';
+    if (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin))) {
+        while (!(HAL_GPIO_ReadPin(GPIOB, C3_Keyboard_Pin)));
+        UART_SendChar('#');
+        return '#';
+    }
+
+    return 'X';
 }
 /* USER CODE END 2 */

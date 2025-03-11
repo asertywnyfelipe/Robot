@@ -1,9 +1,6 @@
-../Core/Src/main.c:106:6:Display	8	static
-../Core/Src/main.c:126:6:MenuOk	8	static
-../Core/Src/main.c:152:6:GetButtonInput	16	static
-../Core/Src/main.c:174:5:Tick	16	static
-../Core/Src/main.c:181:6:DisplayParameters	8	static
-../Core/Src/main.c:195:6:MenuDecode	16	static
-../Core/Src/main.c:280:5:main	16	static
-../Core/Src/main.c:357:6:SystemClock_Config	88	static
-../Core/Src/main.c:402:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:43:6:DisplayMenu	16	static
+../Core/Src/main.c:59:6:HandleMenuInput	24	static
+../Core/Src/main.c:94:6:actionSpeedSettings	24	static
+../Core/Src/main.c:122:6:actionViewParameters	16	static
+../Core/Src/main.c:148:6:send_via_bluetooth	16	static
+../Core/Src/main.c:153:5:main	16	static
