@@ -1,6 +1,11 @@
-../Core/Src/main.c:43:6:DisplayMenu	4
-../Core/Src/main.c:59:6:HandleMenuInput	10
-../Core/Src/main.c:94:6:actionSpeedSettings	6
-../Core/Src/main.c:122:6:actionViewParameters	2
-../Core/Src/main.c:148:6:send_via_bluetooth	1
-../Core/Src/main.c:153:5:main	2
+../Core/Src/main.c:69:6:DisplayMenu	4
+../Core/Src/main.c:84:6:HandleMenuInput	11
+../Core/Src/main.c:125:6:editValue	7
+../Core/Src/main.c:152:6:actionSpeed	1
+../Core/Src/main.c:156:6:actionAcceleration	1
+../Core/Src/main.c:160:6:actionDeceleration	1
+../Core/Src/main.c:165:6:actionMotionSettings	6
+../Core/Src/main.c:193:6:actionViewParameters	2
+../Core/Src/main.c:219:6:setServoAngle	2
+../Core/Src/main.c:233:6:smoothServoMove	3
+../Core/Src/main.c:257:5:main	2

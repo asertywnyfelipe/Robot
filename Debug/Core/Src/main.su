@@ -1,6 +1,11 @@
-../Core/Src/main.c:43:6:DisplayMenu	16	static
-../Core/Src/main.c:59:6:HandleMenuInput	24	static
-../Core/Src/main.c:94:6:actionSpeedSettings	24	static
-../Core/Src/main.c:122:6:actionViewParameters	16	static
-../Core/Src/main.c:148:6:send_via_bluetooth	16	static
-../Core/Src/main.c:153:5:main	16	static
+../Core/Src/main.c:69:6:DisplayMenu	16	static
+../Core/Src/main.c:84:6:HandleMenuInput	24	static
+../Core/Src/main.c:125:6:editValue	24	static
+../Core/Src/main.c:152:6:actionSpeed	8	static
+../Core/Src/main.c:156:6:actionAcceleration	8	static
+../Core/Src/main.c:160:6:actionDeceleration	8	static
+../Core/Src/main.c:165:6:actionMotionSettings	24	static
+../Core/Src/main.c:193:6:actionViewParameters	16	static
+../Core/Src/main.c:219:6:setServoAngle	24	static
+../Core/Src/main.c:233:6:smoothServoMove	24	static
+../Core/Src/main.c:257:5:main	16	static
